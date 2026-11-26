@@ -14,7 +14,7 @@ how it is built and shipped, and how you find out what it is doing.
 - Build flags, static binaries, cross-compiling, and a minimal container image.
 - Small security habits: file permissions, the right random source, constant-time comparison.
 - Benchmarks and CPU profiles.
-- The static checks CI runs, and what "production ready" means for this project.
+- What "production ready" means for this project.
 
 ## The feature
 
@@ -37,7 +37,7 @@ role; this chapter covers the Go around it.
 - [`cmd/candledb/main_test.go`](../../cmd/candledb/main_test.go): tests that run the real commands.
 - [`internal/adapters/httpapi/middleware.go`](../../internal/adapters/httpapi/middleware.go) and [`metrics.go`](../../internal/adapters/httpapi/metrics.go): request logging and `/metrics`.
 - [`internal/adapters/instrumented/store.go`](../../internal/adapters/instrumented/store.go): counters around the store.
-- [`Makefile`](../../Makefile), [`Dockerfile`](../../Dockerfile), [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml): building, packaging, checking.
+- [`Makefile`](../../Makefile), [`Dockerfile`](../../Dockerfile), [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml): building, packaging, checking ([chapter 11](11-continuous-integration.md)).
 
 ## `main` does almost nothing
 
@@ -603,35 +603,15 @@ chapter's stretch exercise.
 
 ## What CI checks
 
-From `.github/workflows/ci.yml`:
+Every push runs the static checks, the tests on three operating systems,
+a coverage minimum, a short fuzzing run, a build for every platform, the
+JavaScript client's tests, and a test of the container image.
+[Chapter 11](11-continuous-integration.md) goes through all of it. The
+short version is one command:
 
-```yaml
-      - name: Format and vet
-        run: make lint
-      - name: Static analysis
-        run: go run honnef.co/go/tools/cmd/staticcheck@latest ./...
-      - name: Known vulnerabilities
-        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
-      - name: Tests with the race detector
-        run: go test -race ./...
-      - name: Fuzz the rules parser briefly
-        run: go test ./internal/rules -run '^$' -fuzz FuzzParse -fuzztime 20s
+```sh
+make check
 ```
-
-- `gofmt` (inside `make lint`) fails the build if any file is not in the
-  standard format. Go code has one format, and nobody argues about it.
-- `go vet` reports constructs that compile but are almost certainly wrong,
-  such as a `Printf` whose arguments do not match its format string.
-- `staticcheck` is a third-party analyser with a wider set of checks:
-  unused code, deprecated functions, suspicious comparisons.
-- `govulncheck` compares the module's dependencies, and the functions
-  actually called in them, against the Go vulnerability database.
-- The tests run with the race detector ([chapter 9](09-concurrency.md)),
-  and the rules parser is fuzzed for a short time
-  ([chapter 3](03-testing.md)).
-
-The last two tools are fetched with `go run package@latest`, so nothing
-needs to be installed on the CI machine.
 
 ## What "production ready" means here
 
@@ -716,7 +696,7 @@ parser.
 Finally, run what CI runs locally:
 
 ```sh
-make lint
+make check
 ```
 
 ## Exercise
@@ -765,7 +745,4 @@ how the listen handler solved the same problem.
 - [Vulnerability Management for Go](https://go.dev/blog/vuln)
 - [crypto/subtle package documentation](https://pkg.go.dev/crypto/subtle)
 
-You have now read every part of the server. The architecture track looks
-at the same code from above: why it is divided the way it is.
-
-Next: [Architecture: the hexagon](../architecture/01-hexagonal.md)
+Next: [Continuous integration](11-continuous-integration.md)

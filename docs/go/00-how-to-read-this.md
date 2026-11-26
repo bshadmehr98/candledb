@@ -93,21 +93,32 @@ exported name in this codebase has a comment that starts with the name.
 The `Makefile` wraps the common combinations. `make help` lists them:
 
 ```
-  help         list the targets
-  build        build the server into bin/candledb
-  run          run a development server with open rules
-  test         run all Go tests
-  test-short   run Go tests, skipping the long randomised ones
-  test-race    run all Go tests with the race detector
-  fuzz         fuzz the rules parser for 30 seconds
-  bench        run the storage benchmarks
-  cover        write coverage.out and print the total
-  lint         check formatting and run go vet
-  sdk          build the JavaScript client
-  sdk-test     test the JavaScript client against the server
-  check        everything CI runs
-  docker       build the container image
-  clean        remove build output
+  help              list the targets
+  build             build the server into bin/candledb
+  run               run a development server with open rules
+  test              run all Go tests
+  test-short        run Go tests, skipping the long randomised ones
+  test-race         run all Go tests with the race detector
+  test-unit         run the Go tests of the packages, without the integration suite
+  test-integration  run the tests that drive the whole server over HTTP
+  fuzz              fuzz the rules parser for 30 seconds
+  bench             run the storage benchmarks
+  bench-smoke       run every benchmark once, to prove they still work
+  cover             write coverage.out and print the total
+  cover-check       fail if total coverage is below COVER_MIN percent
+  lint              check formatting and run go vet
+  tidy-check        fail if go.mod or go.sum are out of date
+  staticcheck       run the staticcheck analyser
+  vuln              look for known vulnerabilities in the code's dependencies
+  rules-check       validate the example app's security rules
+  cross             compile the server for every supported platform
+  sdk               build the JavaScript client
+  sdk-test          test the JavaScript client against the server
+  sdk-pack          check the contents of the npm package without publishing it
+  check             everything CI runs, except the container
+  docker            build the container image
+  docker-smoke      build the image, start it, and check that it serves
+  clean             remove build output
 ```
 
 ## Modules and packages

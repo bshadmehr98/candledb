@@ -309,7 +309,7 @@ protocol and not against the Go types.
 The rules parser reads text written by people, and a parser that panics on
 strange input takes the server down at start-up or reload. The fuzz target
 feeds it arbitrary strings, and evaluates whatever parses. In normal test
-runs only the seed inputs run; `make fuzz` (or CI, for twenty seconds) lets
+runs only the seed inputs run; `make fuzz` (or CI, for thirty seconds) lets
 Go mutate them, guided by coverage, looking for a crash or a hang.
 
 **What it catches:** inputs no human would type. Unterminated everything,
@@ -327,6 +327,13 @@ nesting hundreds deep, a wildcard that never closes.
 | a rules built-in | `rules` |
 | a route, a status code, a JSON field name | `test/integration` and the SDK tests |
 | a flag or the shutdown sequence | `cmd/candledb` |
+| a link or a heading in these documents | `test/docs` |
+| the container image | `make docker-smoke` |
+| the contents of the npm package | `make sdk-pack` |
+
+The last three are not about Go code at all; they and the rest of the
+automated checks are described in
+[Go chapter 11](../go/11-continuous-integration.md).
 
 If a bug is found and no test in the right row failed, the fix has two
 parts: the code, and a test at the lowest layer that could have caught it.
@@ -345,8 +352,9 @@ Being exact about the gaps is part of the strategy.
 - **Browsers.** The SDK is tested in Node only. The example app in
   [`examples/todo`](../../examples/todo) has been exercised by script, not
   in a browser test.
-- **Static analysis.** `go vet` runs in `make lint`. The CI workflow also
-  runs `staticcheck` and `govulncheck`, which have not been run locally.
+- **Other operating systems, locally.** The tests run on Linux, macOS and
+  Windows in CI ([Go chapter 11](../go/11-continuous-integration.md)), and
+  were developed on Linux only.
 
 ## Things to try
 

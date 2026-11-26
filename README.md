@@ -116,7 +116,8 @@ make help         # list all targets
 make test         # Go tests
 make test-race    # Go tests with the race detector
 make sdk-test     # JavaScript client tests against the real server
-make check        # everything CI runs
+make check        # everything CI runs, except the container test
+make docker-smoke # build the container image and test it
 make bench        # storage benchmarks
 make fuzz         # fuzz the rules parser
 ```

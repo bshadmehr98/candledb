@@ -45,6 +45,7 @@ simplest Go to the most advanced.
 | [08 Interpreter](go/08-interpreter.md) | Security rules | Lexing, parsing, recursion, function tables |
 | [09 Concurrency](go/09-concurrency.md) | Realtime listeners | Goroutines, channels, `select`, locks, the race detector |
 | [10 Production](go/10-production.md) | The `candledb` command | Flags, logging, signals, shutdown, building and shipping |
+| [11 Continuous integration](go/11-continuous-integration.md) | The CI workflows | What each automated check finds, running it locally, reading a failure |
 
 ## 3. Architecture
 

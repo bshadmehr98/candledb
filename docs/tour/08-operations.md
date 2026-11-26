@@ -65,7 +65,9 @@ candledb-data/
 ```
 
 - The directory is created with mode `0700`, readable only by the server's
-  user. `jwt.secret` and the database files are `0600`.
+  user. `jwt.secret` and the database files are `0600`. Windows has no
+  such permission bits: there, restrict access to the data directory
+  yourself.
 - All three `candledb.db*` files belong together. Never copy `candledb.db`
   alone from a running server; use `candledb backup`.
 - The database holds the documents, their indexes, the user accounts (with
