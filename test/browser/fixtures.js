@@ -35,7 +35,13 @@ function startStaticServer() {
     server.listen(0, "127.0.0.1", () => {
       ready({
         url: `http://127.0.0.1:${server.address().port}`,
-        stop: () => new Promise((done) => server.close(done)),
+        // close() waits for open connections to end, and a browser keeps
+        // its connections open for reuse; close them from this side.
+        stop: () =>
+          new Promise((done) => {
+            server.close(done);
+            server.closeAllConnections();
+          }),
       });
     });
   });
