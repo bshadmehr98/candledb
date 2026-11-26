@@ -327,11 +327,12 @@ nesting hundreds deep, a wildcard that never closes.
 | a rules built-in | `rules` |
 | a route, a status code, a JSON field name | `test/integration` and the SDK tests |
 | a flag or the shutdown sequence | `cmd/candledb` |
+| what a person sees in the example app | `test/browser` |
 | a link or a heading in these documents | `test/docs` |
 | the container image | `make docker-smoke` |
 | the contents of the npm package | `make sdk-pack` |
 
-The last three are not about Go code at all; they and the rest of the
+The last four are not about Go code at all; they and the rest of the
 automated checks are described in
 [Go chapter 11](../go/11-continuous-integration.md).
 
@@ -349,9 +350,9 @@ Being exact about the gaps is part of the strategy.
   is unmeasured.
 - **Time on the real clock.** Token expiry on the stream is tested with a
   two-second token; nothing runs for hours.
-- **Browsers.** The SDK is tested in Node only. The example app in
-  [`examples/todo`](../../examples/todo) has been exercised by script, not
-  in a browser test.
+- **Phones and old browsers.** The example app is tested in the current
+  desktop versions of Chromium, Firefox and WebKit
+  ([`test/browser`](../../test/browser)), and nowhere else.
 - **Other operating systems, locally.** The tests run on Linux, macOS and
   Windows in CI ([Go chapter 11](../go/11-continuous-integration.md)), and
   were developed on Linux only.

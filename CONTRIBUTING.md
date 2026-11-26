@@ -13,6 +13,7 @@ check.
 make build          # the server, into bin/candledb
 make check          # everything CI runs, except the container test
 make docker-smoke   # the container test
+make browser-test   # the todo example in three browsers
 make help           # all targets
 ```
 

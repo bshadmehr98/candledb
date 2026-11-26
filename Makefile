@@ -5,10 +5,13 @@ LDFLAGS := -s -w -X main.version=$(VERSION)
 
 .PHONY: help build run test test-short test-race test-unit test-integration fuzz bench bench-smoke \
 	cover cover-check lint tidy-check staticcheck vuln rules-check cross sdk sdk-test sdk-pack \
-	check clean docker docker-smoke release-build
+	check clean docker docker-smoke release-build browser-test
 
 # The lowest total statement coverage "make cover-check" accepts, in percent.
 COVER_MIN ?= 85
+
+# Arguments for "make browser-test", for example BROWSERS="--project chromium".
+BROWSERS ?=
 
 # The platforms "make cross" compiles for.
 PLATFORMS := linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64
@@ -90,6 +93,9 @@ check: lint tidy-check staticcheck vuln test-race cover-check bench-smoke rules-
 
 docker: ## build the container image
 	docker build --build-arg VERSION=$(VERSION) -t candledb:$(VERSION) .
+
+browser-test: build sdk ## test the todo example in Chromium, Firefox and WebKit
+	cd test/browser && npm install --no-audit --no-fund && npx playwright test $(BROWSERS)
 
 docker-smoke: ## build the image, start it, and check that it serves
 	./scripts/docker-smoke.sh

@@ -5,3 +5,6 @@ sdk/js/node_modules
 sdk/js/dist
 docs
 release
+test/browser/node_modules
+test/browser/test-results
+test/browser/playwright-report

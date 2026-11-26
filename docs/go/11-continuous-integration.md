@@ -33,7 +33,7 @@ Nothing is published by these workflows. They only answer the question
 
 ## Where the code is
 
-- [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml): the seven CI jobs.
+- [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml): the eight CI jobs.
 - [`.github/workflows/security.yml`](../../.github/workflows/security.yml): vulnerability scans and CodeQL.
 - [`.github/dependabot.yml`](../../.github/dependabot.yml): dependency updates.
 - [`Makefile`](../../Makefile): the commands the jobs run.
@@ -41,6 +41,7 @@ Nothing is published by these workflows. They only answer the question
 - [`sdk/js/scripts/check-pack.mjs`](../../sdk/js/scripts/check-pack.mjs): the npm package test.
 - [`test/docs/docs_test.go`](../../test/docs/docs_test.go): the test that checks these documents.
 - [`test/integration`](../../test/integration): the tests that drive the whole server over HTTP.
+- [`test/browser`](../../test/browser): the tests that drive the example app in real browsers.
 
 ## A workflow file, piece by piece
 
@@ -109,8 +110,9 @@ can do. A check that exists only as twenty lines of YAML can only be
 debugged by pushing commits and waiting.
 
 ```sh
-make check          # everything CI runs, except the container job
+make check          # everything CI runs, except the two jobs below
 make docker-smoke   # the container job (needs Docker)
+make browser-test   # the browser job (downloads three browsers the first time)
 ```
 
 ## What each job checks
@@ -217,6 +219,49 @@ the list: the compiled client must be there, and sources and tests must
 not. Nothing is uploaded. Without this, a mistake in the `files` field of
 `package.json` would be discovered by the first person to install an empty
 package.
+
+### Browser tests
+
+The client's own tests run in Node. Node and a browser both have `fetch`,
+but they are different programs: a browser also enforces CORS, has its own
+implementation of streams, keeps `localStorage`, and renders a page. The
+client is written for browsers, so something has to run it in one.
+
+`make browser-test` uses [Playwright](https://playwright.dev), a library
+that starts a real browser and operates it: open this page, type into that
+field, click, and check what is on the screen. The tests in
+[`test/browser/todo.spec.js`](../../test/browser/todo.spec.js) do to
+[the todo example](../../examples/todo) what a person would:
+
+| Test | What only a browser test can show |
+|---|---|
+| Sign up, add, complete, delete | The page, the client and the server work together at all |
+| Reload the page | The session is restored from `localStorage` |
+| Two windows | A change in one appears in the other, live |
+| Two users | One cannot see the other's list, in the page or by asking the server directly |
+| A title that is too long | The rules refuse it, the optimistic copy disappears, an error is shown |
+| A title containing HTML | It is displayed as text and nothing in it runs |
+| Kill and restart the server | The open page reconnects without a reload |
+
+Each test runs three times, once per browser engine: Chromium (Chrome and
+Edge), Firefox, and WebKit (Safari). The engines differ most in exactly
+the features this client leans on, streaming responses above all.
+
+[`test/browser/fixtures.js`](../../test/browser/fixtures.js) starts the
+servers the tests need. It reuses `startServer` from the client's test
+helpers, and gives every test its own new user, so tests cannot disturb
+each other.
+
+When a test fails in CI, the job uploads a *trace*: a recording of every
+action, with a screenshot of the page before and after each one. Download
+it from the run's page and open it with `npx playwright show-trace`.
+
+This job is not part of `make check`, because the browsers are a download
+of several hundred megabytes. To run one engine only:
+
+```sh
+make browser-test BROWSERS="--project chromium"
+```
 
 ### Container image
 
@@ -381,8 +426,8 @@ Then:
 - **Publishing.** These two workflows publish nothing. A third one does,
   when a version tag is pushed; it is the subject of
   [chapter 12](12-releasing.md).
-- **Browsers.** The client is tested in Node. The example app is not
-  opened in a browser by any test.
+- **Phones and old browsers.** The browser tests use the current desktop
+  versions of three engines.
 - **Performance.** Benchmarks run once, to prove they work. Nothing
   compares their timings with an earlier commit.
 - **Long runs and large data.** Nothing runs for hours or with millions of
@@ -398,6 +443,7 @@ Run the whole pipeline on your machine:
 ```sh
 make check
 make docker-smoke
+make browser-test
 ```
 
 Then break things on purpose, one at a time, and watch the right check

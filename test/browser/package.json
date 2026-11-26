@@ -1,0 +1,12 @@
+{
+  "name": "candledb-browser-tests",
+  "private": true,
+  "description": "Tests of the todo example in real browsers",
+  "type": "module",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.0"
+  }
+}

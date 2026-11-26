@@ -26,4 +26,7 @@ Things to try:
 - Edit `candledb-data/candledb.rules` (for example lower the title limit to
   10 characters), run `pkill -HUP -x candledb`, and add a long todo.
   The server rejects it without a restart.
+- Run `make browser-test` from the repository root. It does all of the
+  above in three browsers; the script is
+  [`test/browser/todo.spec.js`](../../test/browser/todo.spec.js).
 - Read `index.html`. The whole app logic is about 80 lines of JavaScript.
