@@ -1,0 +1,23 @@
+// Security rules for the todo example.
+//
+// Every user has a private list under users/{uid}/todos. The rules below
+// are the whole backend "code" of the app: there is no server to write.
+
+function signedIn() {
+  return request.auth != null;
+}
+
+function validTodo(todo) {
+  return todo.keys().hasOnly(["title", "done", "created"])
+      && todo.title is string
+      && todo.title.size() > 0
+      && todo.title.size() <= 200
+      && todo.done is bool;
+}
+
+match /users/{uid}/todos/{todo} {
+  allow read, delete: if signedIn() && request.auth.uid == uid;
+  allow create, update: if signedIn()
+                        && request.auth.uid == uid
+                        && validTodo(request.resource.data);
+}
