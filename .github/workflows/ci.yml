@@ -1,3 +1,7 @@
+# Runs on every push to main and on every pull request. Each job answers
+# one question; docs/go/11-continuous-integration.md explains them all.
+# Every job is a "make" target, so anything that fails here can be
+# reproduced on a laptop with the same command.
 name: CI
 
 on:
@@ -5,39 +9,138 @@ on:
     branches: [main]
   pull_request:
 
+# The workflow only reads the repository; it never needs to write to it.
 permissions:
   contents: read
 
+# A newer push to the same branch makes the older run pointless: cancel it.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # "1.27.x" with check-latest installs the newest patch release, which is
+  # where fixes for standard-library vulnerabilities arrive.
+  GO_VERSION: "1.27.x"
+
 jobs:
-  go:
+  lint:
+    name: Static checks
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
-      - name: Format and vet
+          go-version: ${{ env.GO_VERSION }}
+          check-latest: true
+      - name: Formatting and go vet
         run: make lint
-      - name: Static analysis
-        run: go run honnef.co/go/tools/cmd/staticcheck@latest ./...
+      - name: go.mod and go.sum are tidy
+        run: make tidy-check
+      - name: staticcheck
+        run: make staticcheck
       - name: Known vulnerabilities
-        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
-      - name: Tests with the race detector
-        run: go test -race ./...
-      - name: Fuzz the rules parser briefly
-        run: go test ./internal/rules -run '^$' -fuzz FuzzParse -fuzztime 20s
+        run: make vuln
+      - name: The example's security rules are valid
+        run: make rules-check
+      - name: Workflow files are valid
+        run: docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:latest -color
+
+  test:
+    name: Tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    defaults:
+      run:
+        shell: bash # the Makefile needs a Unix shell, on Windows too
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          check-latest: true
+      - name: Unit, contract and property tests with the race detector
+        run: make test-unit
+      - name: Integration tests over real HTTP
+        run: make test-integration
+
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          check-latest: true
+      - name: Total coverage meets the minimum
+        run: make cover-check
+      - name: Keep the profile for download
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.out
+
+  fuzz-and-bench:
+    name: Fuzzing and benchmarks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          check-latest: true
+      - name: Fuzz the rules parser for 30 seconds
+        run: make fuzz
+      - name: Every benchmark still runs
+        run: make bench-smoke
+
+  cross-compile:
+    name: Builds for every platform
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          check-latest: true
+      - run: make cross
 
   sdk:
+    name: JavaScript client (Node ${{ matrix.node }})
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20, 22, 24]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
+          go-version: ${{ env.GO_VERSION }}
+          check-latest: true
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
-      - name: Build the server
-        run: make build
-      - name: Test the JavaScript client against it
+          node-version: ${{ matrix.node }}
+      - name: Test the client against the real server
         run: make sdk-test
+      - name: The npm package contains what it should
+        run: make sdk-pack
+
+  container:
+    name: Container image
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the image, start it, write, read, restart
+        run: make docker-smoke

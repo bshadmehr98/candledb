@@ -1,0 +1,3 @@
+# Check files out with Unix line endings on every platform, so that gofmt
+# and the tests see the same bytes on Windows as elsewhere.
+* text=auto eol=lf
