@@ -12,6 +12,7 @@ operating systems, before anyone can forget.
 - How to run a job on your own machine, and how to read a failing run.
 - Why CI can fail when nobody changed the code, and what to do about it.
 - Three real failures from this project's first CI runs, and their fixes.
+- How to make a passing run a condition for merging.
 
 ## The feature
 
@@ -399,6 +400,30 @@ The wrong fix would have been to press "re-run" until it went green. A
 flaky test that is tolerated teaches everyone to ignore red runs, and then
 the suite stops protecting anything.
 
+## Making the checks count
+
+A red run that nobody has to look at protects nothing. On GitHub, the
+`main` branch of this repository has two *rulesets* (Settings, then Rules):
+
+| Ruleset | What it enforces | Who it applies to |
+|---|---|---|
+| No force pushes or deletion | History on `main` cannot be rewritten or removed | Everyone |
+| Changes need a pull request with passing CI | A change reaches `main` only through a pull request on which every CI job has passed | Everyone except repository administrators |
+
+The second one is why a contributor's mistake cannot land: the merge
+button stays disabled until the checks are green. Administrators can still
+push directly, which keeps a one-person project convenient. Removing that
+exception in the ruleset's "bypass list" makes the rule absolute.
+
+The ruleset lists the required checks by job name, such as
+`Tests (windows-latest)`. So if you rename a job in `ci.yml`, or change a
+matrix, update the ruleset too. Otherwise pull requests wait forever for a
+check that no longer exists.
+
+The jobs of the Security workflow are deliberately not required. They can
+fail because of a vulnerability published yesterday, which is not the
+fault of whichever pull request happens to be open today.
+
 ## Reading a failed run
 
 On GitHub, open the repository's **Actions** tab, click the run, click the
@@ -432,9 +457,6 @@ Then:
   compares their timings with an earlier commit.
 - **Long runs and large data.** Nothing runs for hours or with millions of
   documents.
-- **Branch protection.** CI reports a result; it does not stop anyone
-  from pushing to `main`. Requiring the checks to pass before a pull
-  request can be merged is a repository setting on GitHub.
 
 ## Try it
 

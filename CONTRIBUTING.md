@@ -29,7 +29,8 @@ make help           # all targets
    documents in the same pull request. Code excerpts in the docs are copied
    from the source and must still match it.
 4. Run `make check`.
-5. Open a pull request. CI runs on it automatically;
+5. Open a pull request. CI runs on it automatically, and it can be merged
+   only when every check has passed;
    [docs/go/11-continuous-integration.md](docs/go/11-continuous-integration.md)
    explains each check and how to read a failure.
 
