@@ -27,7 +27,8 @@ GitHub's machines:
 A third file, [`.github/dependabot.yml`](../../.github/dependabot.yml),
 asks GitHub to open a pull request whenever a dependency has a newer
 version. CI then runs on that pull request, so the update arrives already
-tested.
+tested. Updates are grouped: one pull request a week for Go modules, one
+for npm packages, one for the actions the workflows use.
 
 Nothing is published by these workflows. They only answer the question
 "is this commit good?". Publishing is [chapter 12](12-releasing.md).
@@ -80,8 +81,8 @@ checks the code out, installs Go, and runs commands:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
           go-version: ${{ env.GO_VERSION }}
           check-latest: true
@@ -212,8 +213,10 @@ Compiling is weaker than testing: this job proves that
 ### JavaScript client
 
 The client's tests start the real server binary and talk to it, so this
-job installs both Go and Node. A matrix runs it on Node 20, 22 and 24: the
-oldest version the client supports, and the two after it.
+job installs both Go and Node. A matrix runs it on Node 20, 22, 24 and 26:
+the oldest version the client supports, and every long-term-support
+release since. Node 18 is not in the list because it has no global
+`crypto` object, which the client uses to generate document IDs.
 
 `make sdk-pack` then asks npm which files it *would* publish and checks
 the list: the compiled client must be there, and sources and tests must
@@ -317,7 +320,7 @@ nobody pushes to would never learn about a new vulnerability.
 It is also the reason for this setting, used by every Go job:
 
 ```yaml
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
           go-version: ${{ env.GO_VERSION }}
           check-latest: true
