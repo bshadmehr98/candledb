@@ -29,7 +29,7 @@ version. CI then runs on that pull request, so the update arrives already
 tested.
 
 Nothing is published by these workflows. They only answer the question
-"is this commit good?".
+"is this commit good?". Publishing is [chapter 12](12-releasing.md).
 
 ## Where the code is
 
@@ -378,8 +378,9 @@ Then:
 
 ## What is not in CI
 
-- **Publishing.** No workflow builds a release, pushes the image to a
-  registry or publishes the client to npm.
+- **Publishing.** These two workflows publish nothing. A third one does,
+  when a version tag is pushed; it is the subject of
+  [chapter 12](12-releasing.md).
 - **Browsers.** The client is tested in Node. The example app is not
   opened in a browser by any test.
 - **Performance.** Benchmarks run once, to prove they work. Nothing
@@ -443,8 +444,4 @@ with `go/ast` instead. That is a small version of what `go vet` and
 - [staticcheck](https://staticcheck.dev) and [actionlint](https://github.com/rhysd/actionlint)
 - [About Dependabot version updates](https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/about-dependabot-version-updates)
 
-You have now read every part of the server and the machinery that keeps
-it working. The architecture track looks at the same code from above: why
-it is divided the way it is.
-
-Next: [Architecture: the hexagon](../architecture/01-hexagonal.md)
+Next: [Releasing](12-releasing.md)

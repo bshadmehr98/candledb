@@ -4,6 +4,12 @@ The JavaScript and TypeScript client for the candledb document database.
 It has no runtime dependencies and runs in browsers and in Node 20 or newer.
 
 ```sh
+npm install candledb-client
+```
+
+To work on the client itself, from this directory:
+
+```sh
 npm install        # installs TypeScript, the only dev dependency
 npm run build      # compiles src/ to dist/
 npm test           # builds, then runs the tests against a real server

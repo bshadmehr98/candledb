@@ -5,7 +5,7 @@ LDFLAGS := -s -w -X main.version=$(VERSION)
 
 .PHONY: help build run test test-short test-race test-unit test-integration fuzz bench bench-smoke \
 	cover cover-check lint tidy-check staticcheck vuln rules-check cross sdk sdk-test sdk-pack \
-	check clean docker docker-smoke
+	check clean docker docker-smoke release-build
 
 # The lowest total statement coverage "make cover-check" accepts, in percent.
 COVER_MIN ?= 85
@@ -94,5 +94,8 @@ docker: ## build the container image
 docker-smoke: ## build the image, start it, and check that it serves
 	./scripts/docker-smoke.sh
 
+release-build: ## build the release archives for every platform into release/
+	./scripts/build-release.sh $(patsubst v%,%,$(VERSION))
+
 clean: ## remove build output
-	rm -rf bin coverage.out sdk/js/dist
+	rm -rf bin release coverage.out sdk/js/dist

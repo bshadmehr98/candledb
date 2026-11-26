@@ -46,6 +46,7 @@ simplest Go to the most advanced.
 | [09 Concurrency](go/09-concurrency.md) | Realtime listeners | Goroutines, channels, `select`, locks, the race detector |
 | [10 Production](go/10-production.md) | The `candledb` command | Flags, logging, signals, shutdown, building and shipping |
 | [11 Continuous integration](go/11-continuous-integration.md) | The CI workflows | What each automated check finds, running it locally, reading a failure |
+| [12 Releasing](go/12-releasing.md) | The release workflow | Versions, tags, Go module releases, multi-architecture images, publishing safely |
 
 ## 3. Architecture
 

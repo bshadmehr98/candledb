@@ -2,6 +2,22 @@
   "name": "candledb-client",
   "version": "0.1.0",
   "description": "Client SDK for the candledb document database",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bshadmehr98/candledb.git",
+    "directory": "sdk/js"
+  },
+  "homepage": "https://github.com/bshadmehr98/candledb/tree/main/sdk/js#readme",
+  "bugs": "https://github.com/bshadmehr98/candledb/issues",
+  "keywords": [
+    "database",
+    "realtime",
+    "firestore",
+    "document-database",
+    "sse",
+    "backend"
+  ],
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

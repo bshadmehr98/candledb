@@ -295,7 +295,10 @@ system crashes, although the database itself stays consistent.
 ## Docker
 
 The repository's [`Dockerfile`](../../Dockerfile) builds a small image that
-contains only the static binary and runs as an unprivileged user.
+contains only the static binary and runs as an unprivileged user. Each
+release publishes that image as `ghcr.io/bshadmehr98/candledb`, for amd64
+and arm64, so you can use that name below in place of building `candledb`
+yourself.
 
 ```sh
 docker build -t candledb .

@@ -8,6 +8,7 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_call: # lets the release workflow run all of this before publishing
 
 # The workflow only reads the repository; it never needs to write to it.
 permissions:
@@ -15,7 +16,7 @@ permissions:
 
 # A newer push to the same branch makes the older run pointless: cancel it.
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:

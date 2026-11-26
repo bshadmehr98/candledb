@@ -4,3 +4,4 @@ candledb-data
 sdk/js/node_modules
 sdk/js/dist
 docs
+release

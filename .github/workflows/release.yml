@@ -1,0 +1,174 @@
+# Publishes a release when a version tag is pushed:
+#
+#     git tag v0.1.0 && git push origin v0.1.0
+#
+# It runs the whole CI workflow first, then publishes three things: archives
+# of the server binary on a GitHub release, a container image on GitHub's
+# registry, and the JavaScript client on npm. The version comes from the tag.
+#
+# Started by hand from the Actions tab it is a rehearsal: everything is
+# built, nothing is published. docs/go/12-releasing.md explains it all.
+name: Release
+
+on:
+  push:
+    tags: ["v[0-9]+.[0-9]+.[0-9]+*"]
+  workflow_dispatch:
+
+# Jobs get only what they need; each one that publishes asks for more below.
+permissions:
+  contents: read
+
+# Never run two releases at once, and never cancel one half way through.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  version:
+    name: Work out the version
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      prerelease: ${{ steps.v.outputs.prerelease }}
+      publish: ${{ steps.v.outputs.publish }}
+    steps:
+      - id: v
+        env:
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          if [ "$REF_TYPE" = tag ]; then
+            version="${REF_NAME#v}"
+            publish=true
+          else
+            version="0.0.0-rehearsal"
+            publish=false
+          fi
+          # Semantic versioning: 1.2.3, optionally followed by -something.
+          if ! printf '%s' "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
+            echo "::error::'$REF_NAME' is not a version tag such as v1.2.3 or v1.2.3-rc.1"
+            exit 1
+          fi
+          # A version with a suffix (1.2.3-rc.1) is a prerelease: published,
+          # but not what people get by default.
+          case "$version" in *-*) prerelease=true ;; *) prerelease=false ;; esac
+          {
+            echo "version=$version"
+            echo "prerelease=$prerelease"
+            echo "publish=$publish"
+          } >> "$GITHUB_OUTPUT"
+          echo "version $version, prerelease $prerelease, publish $publish"
+
+  verify:
+    name: CI
+    uses: ./.github/workflows/ci.yml
+
+  binaries:
+    name: Server binaries
+    needs: [version, verify]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write # to create the GitHub release
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.27.x"
+          check-latest: true
+      - name: Build the archives for every platform
+        run: make release-build VERSION=v${{ needs.version.outputs.version }}
+      - name: Keep the archives for download from this run
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries
+          path: release/
+      - name: Create the GitHub release
+        if: needs.version.outputs.publish == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          PRERELEASE: ${{ needs.version.outputs.prerelease }}
+        run: |
+          flags=(--title "$TAG" --generate-notes --verify-tag)
+          if [ "$PRERELEASE" = true ]; then flags+=(--prerelease); fi
+          gh release create "$TAG" release/* "${flags[@]}"
+
+  image:
+    name: Container image
+    needs: [version, verify]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write # to push to GitHub's container registry
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Choose the image tags
+        id: tags
+        env:
+          REPOSITORY: ${{ github.repository }}
+          VERSION: ${{ needs.version.outputs.version }}
+          PRERELEASE: ${{ needs.version.outputs.prerelease }}
+        run: |
+          image="ghcr.io/${REPOSITORY,,}" # registry names must be lower case
+          tags="$image:$VERSION"
+          # "latest" only ever points at a full release.
+          if [ "$PRERELEASE" = false ]; then tags="$tags,$image:latest"; fi
+          echo "tags=$tags" >> "$GITHUB_OUTPUT"
+      - name: Sign in to the registry
+        if: needs.version.outputs.publish == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - name: Build for amd64 and arm64, and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          build-args: VERSION=${{ needs.version.outputs.version }}
+          tags: ${{ steps.tags.outputs.tags }}
+          push: ${{ needs.version.outputs.publish == 'true' }}
+
+  npm:
+    name: JavaScript client
+    needs: [version, verify]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write # lets npm record which workflow built the package
+    defaults:
+      run:
+        working-directory: sdk/js
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+      - run: npm ci --no-audit --no-fund
+      - name: Set the package version from the tag
+        run: npm version "${{ needs.version.outputs.version }}" --no-git-tag-version --allow-same-version
+      - run: npm run build
+      - name: The package contains what it should
+        run: node scripts/check-pack.mjs
+      - name: Publish to npm
+        if: needs.version.outputs.publish == 'true'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          PRERELEASE: ${{ needs.version.outputs.prerelease }}
+        run: |
+          if [ -z "$NODE_AUTH_TOKEN" ]; then
+            echo "::error::The repository has no NPM_TOKEN secret, so the client was not published. Add it under Settings > Secrets and variables > Actions, then re-run this job."
+            exit 1
+          fi
+          # Prereleases go under the "next" tag, so "npm install candledb-client"
+          # keeps giving people the last full release.
+          if [ "$PRERELEASE" = true ]; then tag=next; else tag=latest; fi
+          npm publish --provenance --access public --tag "$tag"

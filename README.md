@@ -1,5 +1,9 @@
 # candledb
 
+[![CI](https://github.com/bshadmehr98/candledb/actions/workflows/ci.yml/badge.svg)](https://github.com/bshadmehr98/candledb/actions/workflows/ci.yml)
+[![Security](https://github.com/bshadmehr98/candledb/actions/workflows/security.yml/badge.svg)](https://github.com/bshadmehr98/candledb/actions/workflows/security.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 A lightweight document database with realtime sync, in the spirit of
 Firestore: a backend that a frontend talks to directly, with no application
 server of your own in between. It is one static binary and one SQLite file.
@@ -25,6 +29,28 @@ to teach Go, hexagonal architecture and a handful of design patterns. See
   tokens, or bring your own HS256 tokens.
 - **A JavaScript client** ([sdk/js](sdk/js)) with automatic
   reconnection and optimistic local writes.
+
+## Installing
+
+Each release publishes the server in three forms and the client on npm.
+Pick one:
+
+```sh
+# container image (amd64 and arm64)
+docker run -p 8090:8090 -v candledb-data:/data ghcr.io/bshadmehr98/candledb serve -dev-open-rules
+
+# with Go 1.27 or newer
+go install github.com/bshadmehr98/candledb/cmd/candledb@latest
+
+# or download an archive for your platform from
+# https://github.com/bshadmehr98/candledb/releases
+```
+
+```sh
+npm install candledb-client      # the JavaScript and TypeScript client
+```
+
+To build from a checkout instead, continue with the quick start.
 
 ## Quick start
 
@@ -139,3 +165,13 @@ single machine. It has no replication or clustering, so its availability is
 that of the machine it runs on, and its write throughput is that of one
 SQLite file. [docs/tour/10-differences-from-firestore.md](docs/tour/10-differences-from-firestore.md)
 lists what it does differently from Firestore and what it leaves out.
+
+## Contributing and security
+
+[CONTRIBUTING.md](CONTRIBUTING.md) says how to build, test and propose a
+change. To report a vulnerability, follow [SECURITY.md](SECURITY.md)
+instead of opening a public issue.
+
+## License
+
+[MIT](LICENSE).
