@@ -152,7 +152,12 @@ jobs:
           node-version: 22
       - name: Install the three browser engines and what they need
         working-directory: test/browser
-        run: npm ci --no-audit --no-fund && npx playwright install --with-deps
+        # "apt-get update" first: the runner's package index can be older
+        # than the package servers, and installing from a stale index fails.
+        run: |
+          sudo apt-get update
+          npm ci --no-audit --no-fund
+          npx playwright install --with-deps
       - name: Drive the todo example in Chromium, Firefox and WebKit
         run: make browser-test
       - name: Keep recordings of failed tests
