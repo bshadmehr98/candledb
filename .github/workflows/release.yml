@@ -81,7 +81,7 @@ jobs:
       - name: Build the archives for every platform
         run: make release-build VERSION=v${{ needs.version.outputs.version }}
       - name: Keep the archives for download from this run
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: binaries
           path: release/

@@ -83,7 +83,7 @@ jobs:
       - name: Total coverage meets the minimum
         run: make cover-check
       - name: Keep the profile for download
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage
           path: coverage.out
@@ -157,7 +157,7 @@ jobs:
         run: make browser-test
       - name: Keep recordings of failed tests
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: browser-test-results
           path: |
