@@ -4,6 +4,10 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "lib": ["ES2022", "DOM", "DOM.Iterable", "DOM.AsyncIterable"],
+    // No ambient type packages, in particular not @types/node: the compiler
+    // only knows the web-standard APIs in "lib" above, so code that uses a
+    // Node-only API does not compile. That is what keeps the client working
+    // in browsers and on every Node version that has those APIs.
     "types": [],
     "strict": true,
     "noUncheckedIndexedAccess": true,
