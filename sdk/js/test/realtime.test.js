@@ -232,15 +232,20 @@ describe("realtime", () => {
       return Number(/candledb_listen_sessions (\d+)/.exec(await res.text())[1]);
     };
     const quiet = createClient({ url: server.url });
-    const start = await sessions();
+    // Earlier tests close their streams without waiting for the server to
+    // notice, so the count is only meaningful once it has settled at zero.
+    await waitFor(async () => (await sessions()) === 0, { message: "streams of earlier tests are still open" });
 
     const rec = recorder();
     const stop = quiet.doc(ref.path).onSnapshot(rec.onNext, rec.onError);
-    await rec.until(() => true);
-    assert.equal(await sessions(), start + 1);
+    try {
+      await rec.until(() => true);
+      assert.equal(await sessions(), 1);
+    } finally {
+      stop();
+    }
 
-    stop();
-    await waitFor(async () => (await sessions()) === start, { message: "the stream was not closed" });
+    await waitFor(async () => (await sessions()) === 0, { message: "the stream was not closed" });
     const count = rec.snapshots.length;
     await admin.doc(ref.path).set({ n: 1 });
     await admin.doc(ref.path).set({ n: 2 });

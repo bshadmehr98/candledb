@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/bshadmehr98/candledb/internal/adapters/sqlite"
@@ -69,6 +70,11 @@ func TestDataSurvivesReopen(t *testing.T) {
 }
 
 func TestFilesArePrivate(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		// Windows has no owner/group/other permission bits; access there is
+		// governed by the ACL the file inherits from its directory.
+		t.Skip("Unix file permissions do not exist on Windows")
+	}
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "test.db")
 	db, err := sqlite.Open(ctx, path)
